@@ -7,6 +7,18 @@ type testCase struct {
 	want  string
 }
 
+// FakeClipboard is a helper struct for testing.
+type FakeClipboard struct {
+	Data string
+}
+
+func (fc *FakeClipboard) ReadFrom() string {
+	return fc.Data
+}
+
+func (fc *FakeClipboard) WriteTo(b []byte) {
+	fc.Data = string(b)
+}
 func TestHandleNumbers(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{

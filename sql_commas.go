@@ -8,23 +8,13 @@ import (
 
 const ClipboardFormat = clipboard.FmtText
 
+// Clipboard defines a simple interface for interacting with clipboard
 type Clipboard interface {
 	ReadFrom() string
 	WriteTo(b []byte)
 }
 
-type FakeClipboard struct {
-	Data string
-}
-
-func (fc *FakeClipboard) ReadFrom() string {
-	return fc.Data
-}
-
-func (fc *FakeClipboard) WriteTo(b []byte) {
-	fc.Data = string(b)
-}
-
+// SystemClipboard is a wrapper around golang.design/x/clipboard.
 type SystemClipboard struct{}
 
 func (sc *SystemClipboard) ReadFrom() string {
