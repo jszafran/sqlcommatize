@@ -9,58 +9,84 @@ import (
 const ClipboardFormat = clipboard.FmtText
 
 type Clipboard interface {
-	Read() string
+	ReadFrom() string
+	WriteTo(b []byte)
 }
 
 type FakeClipboard struct {
 	Data string
 }
 
-func (fc FakeClipboard) Read() string {
+func (fc *FakeClipboard) ReadFrom() string {
 	return fc.Data
+}
+
+func (fc *FakeClipboard) WriteTo(b []byte) {
+	fc.Data = string(b)
 }
 
 type SystemClipboard struct{}
 
-func (sc SystemClipboard) Read() string {
+func (sc *SystemClipboard) ReadFrom() string {
 	return string(clipboard.Read(ClipboardFormat))
 }
 
-// splitContent split clipboard string into records based on separator character
-func splitContent(s string) []string {
-	// start with most naive implementation - assume \n is the separator
-	return strings.Split(s, "\n")
+func (sc *SystemClipboard) WriteTo(b []byte) {
+	clipboard.Write(ClipboardFormat, b)
 }
 
 // addTrailingComma adds trailing comma to records (except for the last one)
 // so they can be later used within SQL IN clause. Returns slice of bytes.
-func addTrailingComma(recs []string) []byte {
-	return []byte(strings.Join(recs, ",\n"))
+func addTrailingComma(rows []string) []byte {
+	return []byte(strings.Join(rows, ",\n"))
 }
 
 // addSingleQuotes wraps all records with single quotes. If record contains a single quote,
 // it gets replaced with double single quotes
-func addSingleQuotes(recs []string) []string {
-	r := make([]string, len(recs))
-	for i, rec := range recs {
+func addSingleQuotes(rows []string) []string {
+	r := make([]string, len(rows))
+	for i, rec := range rows {
 		r[i] = fmt.Sprintf("'%s'", strings.Replace(rec, "'", "''", -1))
 	}
 	return r
 }
 
-func HandleNumbers(clp Clipboard) []byte {
-	d := clp.Read()
-	recs := splitContent(d)
-	return addTrailingComma(recs)
+// readRows reads content from a clipboard (treating it as a text)
+// and splits them into records
+func readRows(clp Clipboard) []string {
+	txt := clp.ReadFrom()
+	return strings.Split(txt, "\n")
 }
 
-func HandleStrings(clp Clipboard) []byte {
-	d := clp.Read()
-	recs := splitContent(d)
-	quoted := addSingleQuotes(recs)
-	return addTrailingComma(quoted)
+// HandleNumbers processes and treats clipboard content as if it's SQL numeric values.
+// Comma is appended to every row (except for the last one), so you can use it later
+// in a SQL IN clause like that:
+//		SELECT * FROM FOO
+// 		WHERE 1=1
+//		AND ID IN (
+//			1,
+//			2,
+//			3
+//		)
+func HandleNumbers(clp Clipboard) {
+	rows := readRows(clp)
+	processedRows := addTrailingComma(rows)
+	clp.WriteTo(processedRows)
 }
 
-func PasteToClipboard(b []byte) {
-	clipboard.Write(ClipboardFormat, b)
+// HandleStrings processes and treats clipboard content as if it's SQL string value.
+// Each row is wrapped with single quotes and & appended with comma (comma skipped only for the last one),
+// so it can be later used in a SQL IN clause like that:
+//		SELECT * FROM FOO
+// 		WHERE 1=1
+//		AND NAME IN (
+//			'Foo',
+//			'Bar',
+//			'Baz'
+//		)
+func HandleStrings(clp Clipboard) {
+	rows := readRows(clp)
+	quotedRows := addSingleQuotes(rows)
+	processedRows := addTrailingComma(quotedRows)
+	clp.WriteTo(processedRows)
 }

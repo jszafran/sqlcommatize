@@ -6,18 +6,15 @@ import (
 )
 
 func main() {
-	var wrapStrings bool
-	flag.BoolVar(&wrapStrings, "strings", false, "Wraps output with single quotes (SQL strings).")
+	var forStrings bool
+	flag.BoolVar(&forStrings, "strings", false, "Wraps output with single quotes (SQL strings).")
 	flag.Parse()
 
 	clp := go_sql_commas.SystemClipboard{}
 
-	var wrapped []byte
-	if wrapStrings {
-		wrapped = go_sql_commas.HandleStrings(clp)
+	if forStrings {
+		go_sql_commas.HandleStrings(&clp)
 	} else {
-		wrapped = go_sql_commas.HandleNumbers(clp)
+		go_sql_commas.HandleNumbers(&clp)
 	}
-
-	go_sql_commas.PasteToClipboard(wrapped)
 }
