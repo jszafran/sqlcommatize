@@ -38,6 +38,8 @@ func addTrailingComma(recs []string) []byte {
 	return []byte(strings.Join(recs, ",\n"))
 }
 
+// addSingleQuotes wraps all records with single quotes. If record contains a single quote,
+// it gets replaced with double single quotes
 func addSingleQuotes(recs []string) []string {
 	r := make([]string, len(recs))
 	for i, rec := range recs {
