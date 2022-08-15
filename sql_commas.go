@@ -28,7 +28,7 @@ func (sc *SystemClipboard) WriteTo(b []byte) {
 // addTrailingComma adds trailing comma to records (except for the last one)
 // so they can be later used within SQL IN clause. Returns slice of bytes.
 func addTrailingComma(rows []string) []byte {
-	return []byte(strings.Join(rows, ",\n"))
+	return []byte(strings.Join(rows, fmt.Sprintf(",%s", LineBreak)))
 }
 
 // addSingleQuotes wraps all records with single quotes. If record contains a single quote,
@@ -45,7 +45,7 @@ func addSingleQuotes(rows []string) []string {
 // and splits them into records
 func readRows(clp Clipboard) []string {
 	txt := clp.ReadFrom()
-	return strings.Split(txt, "\n")
+	return strings.Split(txt, LineBreak)
 }
 
 // HandleNumbers processes and treats clipboard content as if it's SQL numeric values.

@@ -7,7 +7,8 @@ type testCase struct {
 	want  string
 }
 
-// FakeClipboard is a helper struct for testing.
+// FakeClipboard is a helper struct for testing - implements Clipboard interface
+// and allows to imitate the behaviour of the clipboard and check its value within tests.
 type FakeClipboard struct {
 	Data string
 }
