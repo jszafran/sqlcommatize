@@ -29,6 +29,8 @@ func TestHandleNumbers(t *testing.T) {
 		{"1", "1"},
 		{fmt.Sprintf("1%s2", LineBreak), fmt.Sprintf("1,%s2", LineBreak)},
 		{fmt.Sprintf("1%s2%s3", LineBreak, LineBreak), fmt.Sprintf("1,%s2,%s3", LineBreak, LineBreak)},
+		//Excel adding extra line break at the end edge case
+		{fmt.Sprintf("1%s2%s", LineBreak, LineBreak), fmt.Sprintf("1,%s2", LineBreak)},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}
@@ -47,6 +49,8 @@ func TestHandleStrings(t *testing.T) {
 		{fmt.Sprintf("a%sb", LineBreak), fmt.Sprintf("'a',%s'b'", LineBreak)},
 		{fmt.Sprintf("a%sb%sc", LineBreak, LineBreak), fmt.Sprintf("'a',%s'b',%s'c'", LineBreak, LineBreak)},
 		{fmt.Sprintf("'a'%sb%s'c''", LineBreak, LineBreak), fmt.Sprintf("'''a''',%s'b',%s'''c'''''", LineBreak, LineBreak)},
+		// Excel adding extra line break at the end edge case
+		{fmt.Sprintf("1'%s'2%s", LineBreak, LineBreak), fmt.Sprintf("'1''',%s'''2'", LineBreak)},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}

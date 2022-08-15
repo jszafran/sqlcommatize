@@ -45,6 +45,11 @@ func addSingleQuotes(rows []string) []string {
 // and splits them into records
 func readRows(clp Clipboard) []string {
 	txt := clp.ReadFrom()
+	// handle Excel edge case
+	// it adds additional line break at the end of the copied content
+	if len(txt) >= len(LineBreak) && txt[len(txt)-len(LineBreak):] == LineBreak {
+		txt = txt[:len(txt)-len(LineBreak)]
+	}
 	return strings.Split(txt, LineBreak)
 }
 
