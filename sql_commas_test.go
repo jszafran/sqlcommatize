@@ -1,6 +1,9 @@
 package go_sql_commas
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type testCase struct {
 	input string
@@ -24,8 +27,8 @@ func TestHandleNumbers(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{
 		{"1", "1"},
-		{"1\n2", "1,\n2"},
-		{"1\n2\n3\n4", "1,\n2,\n3,\n4"},
+		{fmt.Sprintf("1%s2", LineBreak), fmt.Sprintf("1,%s2", LineBreak)},
+		{fmt.Sprintf("1%s2%s3", LineBreak, LineBreak), fmt.Sprintf("1,%s2,%s3", LineBreak, LineBreak)},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}
@@ -41,9 +44,9 @@ func TestHandleStrings(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{
 		{"a", "'a'"},
-		{"a\nb", "'a',\n'b'"},
-		{"a\nb \nc", "'a',\n'b ',\n'c'"},
-		{"'a'\nb\n'c''", "'''a''',\n'b',\n'''c'''''"},
+		{fmt.Sprintf("a%sb", LineBreak), fmt.Sprintf("'a',%s'b'", LineBreak)},
+		{fmt.Sprintf("a%sb%sc", LineBreak, LineBreak), fmt.Sprintf("'a',%s'b',%s'c'", LineBreak, LineBreak)},
+		{fmt.Sprintf("'a'%sb%s'c''", LineBreak, LineBreak), fmt.Sprintf("'''a''',%s'b',%s'''c'''''", LineBreak, LineBreak)},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}
