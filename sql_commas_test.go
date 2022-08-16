@@ -6,8 +6,9 @@ import (
 )
 
 type testCase struct {
-	input string
-	want  string
+	input         string
+	want          string
+	leadingCommas bool
 }
 
 // FakeClipboard is a helper struct for testing - implements Clipboard interface.
@@ -26,15 +27,19 @@ func (fc *FakeClipboard) WriteTo(b []byte) {
 func TestHandleNumbers(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{
-		{"1", "1"},
-		{fmt.Sprintf("1%s2", LineBreak), fmt.Sprintf("1,%s2", LineBreak)},
-		{fmt.Sprintf("1%s2%s3", LineBreak, LineBreak), fmt.Sprintf("1,%s2,%s3", LineBreak, LineBreak)},
+		{"1", "1", false},
+		{"1", "1", true},
+		{fmt.Sprintf("1%s2", LineBreak), fmt.Sprintf("1,%s2", LineBreak), false},
+		{fmt.Sprintf("1%s2", LineBreak), fmt.Sprintf("1%s,2", LineBreak), true},
+		{fmt.Sprintf("1%s2%s3", LineBreak, LineBreak), fmt.Sprintf("1,%s2,%s3", LineBreak, LineBreak), false},
+		{fmt.Sprintf("1%s2%s3", LineBreak, LineBreak), fmt.Sprintf("1%s,2%s,3", LineBreak, LineBreak), true},
 		//Excel adding extra line break at the end edge case
-		{fmt.Sprintf("1%s2%s", LineBreak, LineBreak), fmt.Sprintf("1,%s2", LineBreak)},
+		{fmt.Sprintf("1%s2%s", LineBreak, LineBreak), fmt.Sprintf("1,%s2", LineBreak), false},
+		{fmt.Sprintf("1%s2%s", LineBreak, LineBreak), fmt.Sprintf("1%s,2", LineBreak), true},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}
-		HandleNumbers(&clp)
+		HandleNumbers(&clp, c.leadingCommas)
 		got := clp.Data
 		if got != c.want {
 			t.Fatalf("Want %s, got %s", c.want, got)
@@ -45,16 +50,21 @@ func TestHandleNumbers(t *testing.T) {
 func TestHandleStrings(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{
-		{"a", "'a'"},
-		{fmt.Sprintf("a%sb", LineBreak), fmt.Sprintf("'a',%s'b'", LineBreak)},
-		{fmt.Sprintf("a%sb%sc", LineBreak, LineBreak), fmt.Sprintf("'a',%s'b',%s'c'", LineBreak, LineBreak)},
-		{fmt.Sprintf("'a'%sb%s'c''", LineBreak, LineBreak), fmt.Sprintf("'''a''',%s'b',%s'''c'''''", LineBreak, LineBreak)},
+		{"a", "'a'", false},
+		{"a", "'a'", false},
+		{fmt.Sprintf("a%sb", LineBreak), fmt.Sprintf("'a',%s'b'", LineBreak), false},
+		{fmt.Sprintf("a%sb", LineBreak), fmt.Sprintf("'a'%s,'b'", LineBreak), true},
+		{fmt.Sprintf("a%sb%sc", LineBreak, LineBreak), fmt.Sprintf("'a',%s'b',%s'c'", LineBreak, LineBreak), false},
+		{fmt.Sprintf("a%sb%sc", LineBreak, LineBreak), fmt.Sprintf("'a'%s,'b'%s,'c'", LineBreak, LineBreak), true},
+		{fmt.Sprintf("'a'%sb%s'c''", LineBreak, LineBreak), fmt.Sprintf("'''a''',%s'b',%s'''c'''''", LineBreak, LineBreak), false},
+		{fmt.Sprintf("'a'%sb%s'c''", LineBreak, LineBreak), fmt.Sprintf("'''a'''%s,'b'%s,'''c'''''", LineBreak, LineBreak), true},
 		// Excel adding extra line break at the end edge case
-		{fmt.Sprintf("1'%s'2%s", LineBreak, LineBreak), fmt.Sprintf("'1''',%s'''2'", LineBreak)},
+		{fmt.Sprintf("1'%s'2%s", LineBreak, LineBreak), fmt.Sprintf("'1''',%s'''2'", LineBreak), false},
+		{fmt.Sprintf("1'%s'2%s", LineBreak, LineBreak), fmt.Sprintf("'1'''%s,'''2'", LineBreak), true},
 	}
 	for _, c := range cases {
 		clp := FakeClipboard{c.input}
-		HandleStrings(&clp)
+		HandleStrings(&clp, c.leadingCommas)
 		got := clp.Data
 		if got != c.want {
 			t.Fatalf("Want %s, got %s", c.want, got)

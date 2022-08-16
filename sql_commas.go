@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type CommaStyle string
+
 const ClipboardFormat = clipboard.FmtText
 
 // Clipboard defines a simple interface for interacting with clipboard
@@ -25,10 +27,25 @@ func (sc *SystemClipboard) WriteTo(b []byte) {
 	clipboard.Write(ClipboardFormat, b)
 }
 
-// addTrailingComma adds trailing comma to records (except for the last one)
-// so they can be later used within SQL IN clause. Returns slice of bytes.
-func addTrailingComma(rows []string) []byte {
-	return []byte(strings.Join(rows, fmt.Sprintf(",%s", LineBreak)))
+// addCommas adds trailing/leading commas to given rows,
+// so they can be later used within SQL IN clause.
+// Returns result as slice of bytes.
+func addCommas(rows []string, leadingCommas bool) []byte {
+	// trailing commas style
+	if !leadingCommas {
+		return []byte(strings.Join(rows, fmt.Sprintf(",%s", LineBreak)))
+	}
+
+	// leading commas style
+	res := make([]string, len(rows))
+	for i, row := range rows {
+		if i == 0 {
+			res[i] = fmt.Sprintf("%s", row)
+			continue
+		}
+		res[i] = fmt.Sprintf(",%s", row)
+	}
+	return []byte(strings.Join(res, LineBreak))
 }
 
 // addSingleQuotes wraps all records with single quotes. If record contains a single quote,
@@ -63,9 +80,9 @@ func readRows(clp Clipboard) []string {
 //			2,
 //			3
 //		)
-func HandleNumbers(clp Clipboard) {
+func HandleNumbers(clp Clipboard, leadingCommas bool) {
 	rows := readRows(clp)
-	processedRows := addTrailingComma(rows)
+	processedRows := addCommas(rows, leadingCommas)
 	clp.WriteTo(processedRows)
 }
 
@@ -79,9 +96,9 @@ func HandleNumbers(clp Clipboard) {
 //			'Bar',
 //			'Baz'
 //		)
-func HandleStrings(clp Clipboard) {
+func HandleStrings(clp Clipboard, leadingCommas bool) {
 	rows := readRows(clp)
 	quotedRows := addSingleQuotes(rows)
-	processedRows := addTrailingComma(quotedRows)
+	processedRows := addCommas(quotedRows, leadingCommas)
 	clp.WriteTo(processedRows)
 }
