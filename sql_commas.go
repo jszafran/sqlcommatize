@@ -12,15 +12,15 @@ const ClipboardFormat = clipboard.FmtText
 
 // Clipboard defines a simple interface for interacting with clipboard
 type Clipboard interface {
-	ReadFrom() string
+	ReadFrom() []byte
 	WriteTo(b []byte)
 }
 
 // SystemClipboard is a wrapper around golang.design/x/clipboard.
 type SystemClipboard struct{}
 
-func (sc *SystemClipboard) ReadFrom() string {
-	return string(clipboard.Read(ClipboardFormat))
+func (sc *SystemClipboard) ReadFrom() []byte {
+	return clipboard.Read(ClipboardFormat)
 }
 
 func (sc *SystemClipboard) WriteTo(b []byte) {
@@ -61,7 +61,7 @@ func addSingleQuotes(rows []string) []string {
 // readRows reads content from a clipboard (treating it as a text)
 // and splits them into records
 func readRows(clp Clipboard) []string {
-	txt := clp.ReadFrom()
+	txt := string(clp.ReadFrom())
 	// handle Excel edge case
 	// it adds additional line break at the end of the copied content
 	if len(txt) >= len(LineBreak) && txt[len(txt)-len(LineBreak):] == LineBreak {

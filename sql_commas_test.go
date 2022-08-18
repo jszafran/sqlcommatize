@@ -1,7 +1,9 @@
 package go_sql_commas
 
 import (
+	"bytes"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -14,16 +16,18 @@ type testCase struct {
 // FakeClipboard is a helper struct for testing - implements Clipboard interface.
 // Allows to imitate the behaviour of the clipboard and check its value within tests.
 type FakeClipboard struct {
-	Data string
+	b bytes.Buffer
 }
 
-func (fc *FakeClipboard) ReadFrom() string {
-	return fc.Data
+func (fc *FakeClipboard) ReadFrom() []byte {
+	return fc.b.Bytes()
 }
 
 func (fc *FakeClipboard) WriteTo(b []byte) {
-	fc.Data = string(b)
+	fc.b.Reset()
+	fc.b.Write(b)
 }
+
 func TestHandleNumbers(t *testing.T) {
 	t.Parallel()
 	cases := []testCase{
@@ -50,10 +54,12 @@ func TestHandleNumbers(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		clp := FakeClipboard{c.input}
+		clp := FakeClipboard{}
+		clp.WriteTo([]byte(c.input))
 		HandleNumbers(&clp, c.leadingCommas)
-		got := clp.Data
-		if got != c.want {
+		got := clp.ReadFrom()
+		want := []byte(c.want)
+		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Want %s, got %s", c.want, got)
 		}
 	}
@@ -99,10 +105,12 @@ func TestHandleStrings(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		clp := FakeClipboard{c.input}
+		clp := FakeClipboard{}
+		clp.WriteTo([]byte(c.input))
 		HandleStrings(&clp, c.leadingCommas)
-		got := clp.Data
-		if got != c.want {
+		got := clp.ReadFrom()
+		want := []byte(c.want)
+		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Want %s, got %s", c.want, got)
 		}
 	}
