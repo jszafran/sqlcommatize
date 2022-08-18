@@ -2,29 +2,65 @@ package go_sql_commas
 
 import (
 	"fmt"
-	"golang.design/x/clipboard"
+	xclp "golang.design/x/clipboard"
 	"strings"
 )
 
-type CommaStyle string
+const ClipboardFormat = xclp.FmtText
 
-const ClipboardFormat = clipboard.FmtText
-
-// Clipboard defines a simple interface for interacting with clipboard
-type Clipboard interface {
-	ReadFrom() []byte
-	WriteTo(b []byte)
+// clipboardData defines a simple interface for interacting with clipboard
+type clipboardData interface {
+	Read() []byte
+	Write(b []byte)
 }
 
-// SystemClipboard is a wrapper around golang.design/x/clipboard.
-type SystemClipboard struct{}
+// systemClipboardData is a wrapper around actual operating system clip-board.
+type systemClipboardData struct{}
 
-func (sc *SystemClipboard) ReadFrom() []byte {
-	return clipboard.Read(ClipboardFormat)
+// Read reads data from OS clip-board and returns it as slice of bytes.
+func (scd *systemClipboardData) Read() []byte {
+	return xclp.Read(ClipboardFormat)
 }
 
-func (sc *SystemClipboard) WriteTo(b []byte) {
-	clipboard.Write(ClipboardFormat, b)
+// Write writes given data to OS clip-board.
+func (scd *systemClipboardData) Write(b []byte) {
+	xclp.Write(ClipboardFormat, b)
+}
+
+// fakeClipboardData is a helper struct for testing
+// (to avoid reading from/writing to actual OS clip-board).
+type fakeClipboardData struct {
+	d []byte
+}
+
+// Read reads fake clip-board data.
+func (fcd *fakeClipboardData) Read() []byte {
+	return fcd.d
+}
+
+// Write writes given data to fake clip-board.
+func (fcd *fakeClipboardData) Write(b []byte) {
+	fcd.d = b
+}
+
+func SystemClipboard() *clipboard {
+	return &clipboard{&systemClipboardData{}}
+}
+
+func fakeClipboard() *clipboard {
+	return &clipboard{&fakeClipboardData{}}
+}
+
+type clipboard struct {
+	data clipboardData
+}
+
+func (c *clipboard) Commatize(addQuotes bool, leadingCommas bool) {
+	rows := readRows(c.data.Read())
+	if addQuotes {
+		rows = addSingleQuotes(rows)
+	}
+	c.data.Write(addCommas(rows, leadingCommas))
 }
 
 // addCommas adds trailing/leading commas to given rows,
@@ -60,45 +96,12 @@ func addSingleQuotes(rows []string) []string {
 
 // readRows reads content from a clipboard (treating it as a text)
 // and splits them into records
-func readRows(clp Clipboard) []string {
-	txt := string(clp.ReadFrom())
+func readRows(b []byte) []string {
+	s := string(b)
 	// handle Excel edge case
 	// it adds additional line break at the end of the copied content
-	if len(txt) >= len(LineBreak) && txt[len(txt)-len(LineBreak):] == LineBreak {
-		txt = txt[:len(txt)-len(LineBreak)]
+	if len(s) >= len(LineBreak) && s[len(s)-len(LineBreak):] == LineBreak {
+		s = s[:len(s)-len(LineBreak)]
 	}
-	return strings.Split(txt, LineBreak)
-}
-
-// HandleNumbers processes and treats clipboard content as if it's SQL numeric values.
-// Comma is appended to every row (except for the last one), so you can use it later
-// in a SQL IN clause like that:
-//		SELECT * FROM FOO
-// 		WHERE 1=1
-//		AND ID IN (
-//			1,
-//			2,
-//			3
-//		)
-func HandleNumbers(clp Clipboard, leadingCommas bool) {
-	rows := readRows(clp)
-	processedRows := addCommas(rows, leadingCommas)
-	clp.WriteTo(processedRows)
-}
-
-// HandleStrings processes and treats clipboard content as if it's SQL string value.
-// Each row is wrapped with single quotes and & appended with comma (comma skipped only for the last one),
-// so it can be later used in a SQL IN clause like that:
-//		SELECT * FROM FOO
-// 		WHERE 1=1
-//		AND NAME IN (
-//			'Foo',
-//			'Bar',
-//			'Baz'
-//		)
-func HandleStrings(clp Clipboard, leadingCommas bool) {
-	rows := readRows(clp)
-	quotedRows := addSingleQuotes(rows)
-	processedRows := addCommas(quotedRows, leadingCommas)
-	clp.WriteTo(processedRows)
+	return strings.Split(s, LineBreak)
 }

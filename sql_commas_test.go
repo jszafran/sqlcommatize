@@ -54,10 +54,10 @@ func TestHandleNumbers(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		clp := FakeClipboard{}
-		clp.WriteTo([]byte(c.input))
-		HandleNumbers(&clp, c.leadingCommas)
-		got := clp.ReadFrom()
+		clp := fakeClipboard()
+		clp.data.Write([]byte(c.input))
+		clp.Commatize(false, c.leadingCommas)
+		got := clp.data.Read()
 		want := []byte(c.want)
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Want %s, got %s", c.want, got)
@@ -105,10 +105,10 @@ func TestHandleStrings(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		clp := FakeClipboard{}
-		clp.WriteTo([]byte(c.input))
-		HandleStrings(&clp, c.leadingCommas)
-		got := clp.ReadFrom()
+		clp := fakeClipboard()
+		clp.data.Write([]byte(c.input))
+		clp.Commatize(true, c.leadingCommas)
+		got := clp.data.Read()
 		want := []byte(c.want)
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Want %s, got %s", c.want, got)

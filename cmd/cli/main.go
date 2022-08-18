@@ -13,11 +13,10 @@ func main() {
 		"(trailing commas used by default).")
 	flag.Parse()
 
-	clp := go_sql_commas.SystemClipboard{}
-
+	clp := go_sql_commas.SystemClipboard()
 	if forStrings {
-		go_sql_commas.HandleStrings(&clp, leadingCommas)
-	} else {
-		go_sql_commas.HandleNumbers(&clp, leadingCommas)
+		clp.Commatize(true, leadingCommas)
+		return
 	}
+	clp.Commatize(false, leadingCommas)
 }
