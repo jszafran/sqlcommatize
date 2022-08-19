@@ -53,6 +53,83 @@ Handling large number of records manually becomes very cumbersome quickly.
 * Pastes processed records back to clipboard
 
 It was written in Golang and compiles to a single binary file.
-It's available for various OSes: Linux, MacOS, Windows.
+It's available for various operating systems: Linux, MacOS, Windows.
 
+## Usage
 
+```
+./sql_commatize --help
+```
+
+prints available flags:
+```
+Usage of sql_commatize:
+  -leading_commas
+        Use leading commas for separating rows (trailing commas used by default).
+  -strings
+        Wraps rows with single quotes (for SQL strings).
+```
+### No arguments provided
+When you run the application without any arguments, it uses default arguments:
+* only commas are added (input is treated as numbers)
+* trailing commas styling is used
+
+For input:
+```
+1
+2
+3
+```
+
+running
+
+```bash
+./sql_commatize_linux_amd64
+```
+
+produces:
+
+```
+1,
+2,
+3
+```
+
+### `--strings` flag
+
+```bash
+./sql_commatize_linux_amd64 --strings
+```
+
+`--strings` (or `-strings`) flag wraps each record with single quotes:
+
+```
+'1',
+'2',
+'3'
+```
+
+If any records contains a single quotes, program replaces them with double single quotes:
+
+```
+What's up?
+Foo
+Bar
+```
+
+would be transformed into:
+
+```sql
+'What''s up?',
+'Foo',
+'Bar'
+```
+
+### `--leading_commas` flag
+`--leading_commas` (or `-leading_commas`) switches the leading commas styling:
+
+```
+1
+,2
+,3
+```
