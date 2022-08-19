@@ -46,17 +46,20 @@ Handling large number of records manually becomes very cumbersome quickly.
 
 `SQL Commatizer` does the tedious work for you.
 
-## How it works?
+## How does it work?
 `SQL Commatizer` is a command-line tool that:
 * Reads the content of your clipboard
 * Adds commas (and optionally single quotes) to records
 * Pastes processed records back to clipboard
 
-It was written in Golang and compiles to a single binary file.
-It's available for various operating systems: Linux, MacOS, Windows.
+It is written in Golang and compiles to a single binary file.
+Multiplatform support (Linux, MacOS, Windows) is achieved thanks to `golang.design/x/clipboard` module.
+
+
 
 ## Usage
 
+Command
 ```
 ./sql_commatize --help
 ```
@@ -84,7 +87,7 @@ For input:
 running
 
 ```bash
-./sql_commatize_linux_amd64
+./sql_commatize
 ```
 
 produces:
@@ -98,7 +101,7 @@ produces:
 ### `--strings` flag
 
 ```bash
-./sql_commatize_linux_amd64 --strings
+./sql_commatize --strings
 ```
 
 `--strings` (or `-strings`) flag wraps each record with single quotes:
