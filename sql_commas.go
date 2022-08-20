@@ -6,82 +6,87 @@ import (
 	"strings"
 )
 
-const ClipboardFormat = xclp.FmtText
+type CommaStyle string
 
-// clipboardData defines a simple interface for interacting with clipboard
-type clipboardData interface {
+const (
+	Leading  CommaStyle = "leading"
+	Trailing CommaStyle = "trailing"
+)
+
+type RowType string
+
+const (
+	String RowType = "string"
+	Number RowType = "number"
+)
+
+type dataStore interface {
 	Read() []byte
 	Write(b []byte)
 }
 
-// systemClipboardData is a wrapper around actual operating system clip-board.
-type systemClipboardData struct{}
-
-// Read reads data from OS clip-board and returns it as slice of bytes.
-func (scd *systemClipboardData) Read() []byte {
-	return xclp.Read(ClipboardFormat)
+type Commatizer struct {
+	store dataStore
 }
 
-// Write writes given data to OS clip-board.
-func (scd *systemClipboardData) Write(b []byte) {
-	xclp.Write(ClipboardFormat, b)
-}
-
-// fakeClipboardData is a helper struct for testing
-// (to avoid reading from/writing to actual OS clip-board).
-type fakeClipboardData struct {
-	d []byte
-}
-
-// Read reads fake clip-board data.
-func (fcd *fakeClipboardData) Read() []byte {
-	return fcd.d
-}
-
-// Write writes given data to fake clip-board.
-func (fcd *fakeClipboardData) Write(b []byte) {
-	fcd.d = b
-}
-
-func SystemClipboard() *clipboard {
-	return &clipboard{&systemClipboardData{}}
-}
-
-func fakeClipboard() *clipboard {
-	return &clipboard{&fakeClipboardData{}}
-}
-
-type clipboard struct {
-	data clipboardData
-}
-
-func (c *clipboard) Commatize(addQuotes bool, leadingCommas bool) {
-	rows := readRows(c.data.Read())
-	if addQuotes {
+func (c *Commatizer) Transform(rt RowType, cs CommaStyle) {
+	rows := readRows(c.store.Read())
+	if rt == String {
 		rows = addSingleQuotes(rows)
 	}
-	c.data.Write(addCommas(rows, leadingCommas))
+	withCommas := addCommas(rows, cs)
+	c.store.Write(withCommas)
+}
+
+// clipboardStore is a data store based on OS clip-board.
+type clipboardStore struct{}
+
+// Read reads data from OS clip-board
+func (cs *clipboardStore) Read() []byte {
+	return xclp.Read(xclp.FmtText)
+}
+
+// Write writes b to OS clip-board
+func (cs *clipboardStore) Write(b []byte) {
+	xclp.Write(xclp.FmtText, b)
+}
+
+// fakeStore is an util store used for testing - stores data within struct field.
+type fakeStore struct {
+	data []byte
+}
+
+// Read reads data from fake store
+func (fs *fakeStore) Read() []byte {
+	return fs.data
+}
+
+// Write writes b to fake store
+func (fs *fakeStore) Write(b []byte) {
+	fs.data = b
 }
 
 // addCommas adds trailing/leading commas to given rows,
 // so they can be later used within SQL IN clause.
 // Returns result as slice of bytes.
-func addCommas(rows []string, leadingCommas bool) []byte {
-	// trailing commas style
-	if !leadingCommas {
-		return []byte(strings.Join(rows, fmt.Sprintf(",%s", LineBreak)))
-	}
+func addCommas(rows []string, commaStyle CommaStyle) []byte {
+	var r []byte
 
-	// leading commas style
-	res := make([]string, len(rows))
-	for i, row := range rows {
-		if i == 0 {
-			res[i] = fmt.Sprintf("%s", row)
-			continue
+	switch commaStyle {
+	case Trailing:
+		r = []byte(strings.Join(rows, fmt.Sprintf(",%s", LineBreak)))
+	case Leading:
+		res := make([]string, len(rows))
+		for i, row := range rows {
+			if i == 0 {
+				res[i] = fmt.Sprintf("%s", row)
+				continue
+			}
+			res[i] = fmt.Sprintf(",%s", row)
 		}
-		res[i] = fmt.Sprintf(",%s", row)
+		r = []byte(strings.Join(res, LineBreak))
 	}
-	return []byte(strings.Join(res, LineBreak))
+	return r
 }
 
 // addSingleQuotes wraps all records with single quotes. If record contains a single quote,
@@ -104,4 +109,12 @@ func readRows(b []byte) []string {
 		s = s[:len(s)-len(LineBreak)]
 	}
 	return strings.Split(s, LineBreak)
+}
+
+func NewCommatizer() Commatizer {
+	return Commatizer{store: &clipboardStore{}}
+}
+
+func testCommatizerWithData(b []byte) Commatizer {
+	return Commatizer{store: &fakeStore{b}}
 }
