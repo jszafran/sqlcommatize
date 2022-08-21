@@ -136,3 +136,10 @@ would be transformed into:
 ,2
 ,3
 ```
+
+### Keyboard shortcuts
+For usage convenience, you can create 2 keyboard shortcuts:
+* one for numeric values `/path/to/sqlcommatize` (or optionally `/path/to/sqlcommatize -leading_commas` for leading commas)
+* one for string values `/path/to/sqlcommatize -strings` (`/path/to/sqlcommatize -leading_commas -strings`)
+
+and use them quickly whenever you need to paste some rows into SQL query.
