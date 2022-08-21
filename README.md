@@ -1,4 +1,4 @@
-# SQL Commatizer
+# sqlcommatize
 
 ## Why this project was created?
 
@@ -44,10 +44,10 @@ WHERE ID IN (
 
 Handling large number of records manually becomes very cumbersome quickly.
 
-`SQL Commatizer` does the tedious work for you.
+`sqlcommatize` does the tedious work for you.
 
 ## How does it work?
-`SQL Commatizer` is a command-line tool that:
+`sqlcommatize` is a command-line tool that:
 * Reads the content of your clipboard
 * Adds commas (and optionally single quotes) to records
 * Pastes processed records back to clipboard
@@ -61,12 +61,12 @@ Multiplatform support (Linux, MacOS, Windows) is achieved thanks to `golang.desi
 
 Command
 ```
-./sql_commatize --help
+./sqlcommatize --help
 ```
 
 prints available flags:
 ```
-Usage of sql_commatize:
+Usage of sqlcommatize:
   -leading_commas
         Use leading commas for separating rows (trailing commas used by default).
   -strings
@@ -87,7 +87,7 @@ For input:
 running
 
 ```bash
-./sql_commatize
+./sqlcommatize
 ```
 
 produces:
@@ -98,13 +98,13 @@ produces:
 3
 ```
 
-### `--strings` flag
+### `-strings` flag
 
 ```bash
-./sql_commatize --strings
+./sqlcommatize -strings
 ```
 
-`--strings` (or `-strings`) flag wraps each record with single quotes:
+`-strings` flag wraps each record with single quotes:
 
 ```
 '1',
@@ -128,8 +128,8 @@ would be transformed into:
 'Bar'
 ```
 
-### `--leading_commas` flag
-`--leading_commas` (or `-leading_commas`) switches the leading commas styling:
+### `-leading_commas` flag
+`-leading_commas` changes the comma styling from trailing to leading:
 
 ```
 1

@@ -1,6 +1,6 @@
 # credits for this multi-platform Makefile: https://www.codershaven.com/multi-platform-makefile-for-go/
 
-EXECUTABLE=sql_commatize
+EXECUTABLE=sqlcommatize
 WINDOWS=$(EXECUTABLE)_windows_amd64.exe
 LINUX=$(EXECUTABLE)_linux_amd64
 DARWIN=$(EXECUTABLE)_darwin_amd64

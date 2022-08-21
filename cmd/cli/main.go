@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	go_sql_commas "github.com/jszafran/go-sql-commas"
+	sqlcommatize "github.com/jszafran/go-sql-commas"
+	"golang.design/x/clipboard"
 )
 
 func main() {
@@ -13,16 +14,17 @@ func main() {
 		"(trailing commas used by default).")
 	flag.Parse()
 
-	cs := go_sql_commas.Trailing
+	cs := sqlcommatize.Trailing
 	if leadingCommas {
-		cs = go_sql_commas.Leading
+		cs = sqlcommatize.Leading
 	}
 
-	rt := go_sql_commas.Number
+	rt := sqlcommatize.Number
 	if forStrings {
-		rt = go_sql_commas.String
+		rt = sqlcommatize.String
 	}
 
-	cmtz := go_sql_commas.NewCommatizer()
-	cmtz.Transform(rt, cs)
+	inp := clipboard.Read(clipboard.FmtText)
+	res := sqlcommatize.Commatize(inp, rt, cs)
+	clipboard.Write(clipboard.FmtText, res)
 }

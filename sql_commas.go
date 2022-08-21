@@ -2,12 +2,19 @@ package go_sql_commas
 
 import (
 	"fmt"
-	xclp "golang.design/x/clipboard"
 	"strings"
 )
 
 type CommaStyle string
 
+// Trailing comma style:
+//	1,
+//	2,
+//	3
+// Leading comma style:
+//	1
+//	,2
+//	,3
 const (
 	Leading  CommaStyle = "leading"
 	Trailing CommaStyle = "trailing"
@@ -15,55 +22,25 @@ const (
 
 type RowType string
 
+// String row type means rows will be used as SQL strings
+// - they need to be wrapped with single quotes.
+// Number row type means rows will be used as SQL numeric values
+// - no single quotes required.
 const (
 	String RowType = "string"
 	Number RowType = "number"
 )
 
-type dataStore interface {
-	Read() []byte
-	Write(b []byte)
-}
-
-type Commatizer struct {
-	store dataStore
-}
-
-func (c *Commatizer) Transform(rt RowType, cs CommaStyle) {
-	rows := readRows(c.store.Read())
+// Commatize splits b input by OS break line character (\r\n or \n),
+// wraps them optionally with single quotes (for SQL strings)
+// and delimits with commas (applying trailing/leading comma styling based on cs argument).
+// Returns result as a slice of bytes.
+func Commatize(b []byte, rt RowType, cs CommaStyle) []byte {
+	rows := readRows(b)
 	if rt == String {
 		rows = addSingleQuotes(rows)
 	}
-	withCommas := addCommas(rows, cs)
-	c.store.Write(withCommas)
-}
-
-// clipboardStore is a data store based on OS clip-board.
-type clipboardStore struct{}
-
-// Read reads data from OS clip-board
-func (cs *clipboardStore) Read() []byte {
-	return xclp.Read(xclp.FmtText)
-}
-
-// Write writes b to OS clip-board
-func (cs *clipboardStore) Write(b []byte) {
-	xclp.Write(xclp.FmtText, b)
-}
-
-// fakeStore is an util store used for testing - stores data within struct field.
-type fakeStore struct {
-	data []byte
-}
-
-// Read reads data from fake store
-func (fs *fakeStore) Read() []byte {
-	return fs.data
-}
-
-// Write writes b to fake store
-func (fs *fakeStore) Write(b []byte) {
-	fs.data = b
+	return addCommas(rows, cs)
 }
 
 // addCommas adds trailing/leading commas to given rows,
@@ -109,12 +86,4 @@ func readRows(b []byte) []string {
 		s = s[:len(s)-len(LineBreak)]
 	}
 	return strings.Split(s, LineBreak)
-}
-
-func NewCommatizer() Commatizer {
-	return Commatizer{store: &clipboardStore{}}
-}
-
-func testCommatizerWithData(b []byte) Commatizer {
-	return Commatizer{store: &fakeStore{b}}
 }

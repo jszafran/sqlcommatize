@@ -16,16 +16,14 @@ func TestCommatizer_Transform(t *testing.T) {
 
 	runCases := func(tc []testCase, rt RowType, cs CommaStyle) {
 		for _, c := range tc {
-			cmtz := testCommatizerWithData([]byte(c.input))
-			cmtz.Transform(rt, cs)
-			got := cmtz.store.Read()
+			got := Commatize([]byte(c.input), rt, cs)
 			want := []byte(c.want)
 			if !reflect.DeepEqual(got, want) {
 				t.Fatalf("Got %v, want %v", got, want)
 			}
 		}
 	}
-	
+
 	// numbers
 	cases := []testCase{
 		{"1", "1"},
