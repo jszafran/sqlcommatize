@@ -1,4 +1,4 @@
-module github.com/jszafran/go-sql-commas
+module github.com/jszafran/sqlcommatize
 
 go 1.18
 

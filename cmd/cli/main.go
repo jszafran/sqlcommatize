@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	sqlcommatize "github.com/jszafran/go-sql-commas"
+	sqlcommatize "github.com/jszafran/sqlcommatize"
 	"golang.design/x/clipboard"
 )
 

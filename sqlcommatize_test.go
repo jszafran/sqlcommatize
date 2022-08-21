@@ -1,4 +1,4 @@
-package go_sql_commas
+package sqlcommatize
 
 import (
 	"fmt"

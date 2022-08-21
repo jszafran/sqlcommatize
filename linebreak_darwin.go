@@ -1,3 +1,3 @@
-package go_sql_commas
+package sqlcommatize
 
 const LineBreak = "\n"
